@@ -2,8 +2,8 @@
 Contributors: smartware.cc
 Tags: log, click, click counting, link analytics, tracking, visitor tracking, external links
 Requires at least: 3.0
-Tested up to: 3.8.1
-Stable tag: 1.0
+Tested up to: 3.9.1
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,17 +17,23 @@ To achieve this the link-log Plugin changes all your links to external sites. Fo
 
 There is **no need to change anything**. All Links in all posts (even custom post types) and pages are changed automatically in front end. When editing a post or page in back end all links appear unchanged.
 
+= New in Version 1.1 =
+
+It is now possible to omit multiplce clicks from the same IP-address within a selectable period (30 seconds to 72 hours).
+
 = Settings (optional) =
 
-The name of the parameter (default ?goto) can be changed in Settings -> link-log.
+In Settings -> link-log the name of the parameter (default ?goto) and the duration of the IP-lock (default none) can be changed.
 
 = Theme functions =
 
 There are two functions you can use in your theme files:
 
-**`get_linklog_url( $url )`** to get the tracking URL, e.g. `<?php $google = get_linklog_url( 'http://www.google.com' ); ?>`
+**`get_linklog_url( $url )`** to get the tracking URL, 
+e.g. `<?php $google = get_linklog_url( 'http://www.google.com' ); ?>`
 
-**`the_linklog_url( $url )`** to echo the tracking URL, e.g. `<a href="<?php the_linklog_url( 'http://www.google.com' ); ?>" target"=_blank">Google</a>`
+**`the_linklog_url( $url )`** to echo the tracking URL, 
+e.g. `<a href="<?php the_linklog_url( 'http://www.google.com' ); ?>" target"=_blank">Google</a>`
 
 = More Information =
 
@@ -68,5 +74,8 @@ Yes, in a Multisite installation the plugin stores the link clicks per blog.
 
 == Changelog ==
 
-= 1.0 (2014-02-25) =
+= 1.1 (2014-06-25) =
+* Omit multiple clicks from same IP
+
+= 1.0 (2014-02-20) =
 * Initial Release

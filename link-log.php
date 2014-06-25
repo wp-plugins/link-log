@@ -3,7 +3,7 @@
 Plugin Name: link-log
 Plugin URI: http://smartware.cc/wp-link-log
 Description: Log external link clicks
-Version: 1.0
+Version: 1.1
 Author: smartware.cc
 Author URI: http://smartware.cc
 License: GPL2
@@ -24,6 +24,13 @@ License: GPL2
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+
+// set version
+define( 'SWCC_LINKLOG_VERSION', '1.1' );
+
+if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
+  require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
+}
 
 // parse content and rewrite all external urls
 function swcc_linklog_parse_content( $content ) {
@@ -60,10 +67,42 @@ function swcc_linklog_redirect( $wp ) {
       global $wpdb;
       $url = str_replace ( ' ', '+', urldecode( $wp->query_vars[$urlparam] ) );
       wp_redirect( $url );
-      $wpdb->query( 'INSERT INTO ' . $wpdb->prefix . 'linklog ( linklog_url ) VALUES ("' . esc_sql( $url ) . '")' ) ;
+      $iplock = swcc_linklog_get_iplock();
+      $ip = get_client_ip();
+      $url = esc_sql( $url );
+      $insert = true;
+      if ( $iplock != 0 && $ip != '' ) {
+        $test = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . 'linklog WHERE linklog_url = "' . $url . '" AND linklog_ip = "' . $ip . '" AND linklog_clicked >=  DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL -' . $iplock . ' SECOND)' );
+        if ( ! is_null($wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . 'linklog WHERE linklog_url = "' . $url . '" AND linklog_ip = "' . $ip . '" AND linklog_clicked >=  DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL -' . $iplock . ' SECOND)' ) ) ) {
+          $insert = false;
+        }
+      }
+      if ( $insert ) {
+        $wpdb->query( 'INSERT INTO ' . $wpdb->prefix . 'linklog ( linklog_url, linklog_ip ) VALUES ( "' .  $url . '", "' . $ip . '" )' ) ;
+      }
       exit;
     }
   }
+}
+
+// get ip address
+function get_client_ip() {
+  if ($_SERVER['HTTP_CLIENT_IP']) {
+    $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
+  } elseif($_SERVER['HTTP_X_FORWARDED_FOR']) {
+    $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+  } elseif($_SERVER['HTTP_X_FORWARDED']) {
+    $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
+  } elseif($_SERVER['HTTP_FORWARDED_FOR']) {
+    $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
+  } elseif($_SERVER['HTTP_FORWARDED']) {
+    $ipaddress = $_SERVER['HTTP_FORWARDED'];
+  } elseif($_SERVER['REMOTE_ADDR']) {
+    $ipaddress = $_SERVER['REMOTE_ADDR'];
+  } else {
+    $ipaddress = '';
+  }
+  return $ipaddress;
 }
 
 // show admin page log
@@ -77,9 +116,9 @@ function swcc_linklog_admin_log() {
     <h2>link-log Link Click Statistic</h2>
     <h3 class="title">the link-log plugin</h3>
     <ul class='subsubsub'>
-      <li><a href="http://wordpress.org/plugins/link-log/">Please rate the plugin</a> |</li>
-      <li><a href="http://smartware.cc/wp-link-log/">Plugin homepage |</a></li>
-      <li><a href="http://smartware.cc/">Author homepage</a></li>
+      <li><a href="#">Please rate the plugin</a> |</li>
+      <li><a href="#">Plugin homepage |</a></li>
+      <li><a href="#">Author homepage</a></li>
     </ul>
     <div class="clear"></div>
     <h3 class="title">click statistics</h3>					
@@ -151,12 +190,38 @@ function swcc_linklog_admin_settings_url() {
   echo '<p>Specify the parameter name to use in the generated URL for logging the link clicks (default "goto").<br />Example: <code>' . home_url() . '?<strong>goto</strong>=http://wordpress.org</code></p>';
 }
 
-// handle the settings field
+// sttings group : iplock 
+function swcc_linklog_admin_settings_iplock() {
+  echo '<p>This feature avoids counting of multiple click.</p>';
+}
+
+// handle the settings field : url
 function swcc_linklog_admin_urlparam() {
   echo '<input class="regular-text" type="text" name="swcc_linklog_urlparam" id="swcc_linklog_urlparam" value="' . swcc_linklog_get_parametername() . '" />';
 }
 
-// check input 
+// handle the settings field : iplock
+function swcc_linklog_admin_iplockparam() {
+  $curvalue = swcc_linklog_get_iplock();
+  echo '<select name="swcc_linklog_iplockparam" id="swcc_linklog_iplockparam">';
+  echo '<option value="0"' . ( ( $curvalue == 0 ) ? ' selected="selected"' : '' ) . '>Count all clicks</option>';
+  echo '<option value="30"' . ( ( $curvalue == 30 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 30 seconds</option>';
+  echo '<option value="60"' . ( ( $curvalue == 60 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 1 minute</option>';
+  echo '<option value="300"' . ( ( $curvalue == 300 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 5 minutes</option>';
+  echo '<option value="900"' . ( ( $curvalue == 900 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 15 minutes</option>';
+  echo '<option value="1800"' . ( ( $curvalue == 1800 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 30 minutes</option>';
+  echo '<option value="3600"' . ( ( $curvalue == 3600 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 1 hour</option>';
+  echo '<option value="10800"' . ( ( $curvalue == 10800 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 3 hours</option>';
+  echo '<option value="21600"' . ( ( $curvalue == 21600 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 6 hours</option>';
+  echo '<option value="43200"' . ( ( $curvalue == 43200 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 12 hours</option>';
+  echo '<option value="86400"' . ( ( $curvalue == 86400 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 24 hours</option>';
+  echo '<option value="129600"' . ( ( $curvalue == 129600 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 36 hours</option>';
+  echo '<option value="172800"' . ( ( $curvalue == 172800 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 48 hours</option>';
+  echo '<option value="259200"' . ( ( $curvalue == 259200 ) ? ' selected="selected"' : '' ) . '>Do not count multiple clicks from the same IP within 72 hours</option>';
+  echo '</select>';
+}
+
+// check input : url
 function swcc_linklog_admin_urlparam_validate( $input ) {
   if ( empty( $input ) ) {
     $new = 'goto';
@@ -167,6 +232,11 @@ function swcc_linklog_admin_urlparam_validate( $input ) {
     add_settings_error( 'link-log-settings-url-err', 'link-log-settings-url-error', 'The parameter name must only contain letters and/or digits.', 'error' );	
   }
   return $new;
+}
+
+// check input : iploc
+function swcc_linklog_admin_iplockparam_validate( $input ) {
+  return $input;
 }
 
 // init backend 
@@ -181,7 +251,11 @@ function swcc_linklog_adminmenu() {
 function swcc_linklog_register_settings() {
   register_setting( 'swcc_linklog', 'swcc_linklog_urlparam', 'swcc_linklog_admin_urlparam_validate');
   add_settings_section( 'link-log-settings-url', 'URL Parameter', 'swcc_linklog_admin_settings_url', 'link-log-settings' );
-  add_settings_field( 'swcc_linklog_settings_urlparam', 'Parameter Name to use in URL', 'swcc_linklog_admin_urlparam', 'link-log-settings', 'link-log-settings-url', array( 'label_for' => 'swcc_linklog_urlparam' ) ) ;
+  add_settings_field( 'swcc_linklog_settings_urlparam', 'Parameter Name to use in URL', 'swcc_linklog_admin_urlparam', 'link-log-settings', 'link-log-settings-url', array( 'label_for' => 'swcc_linklog_urlparam' ) );
+  
+  register_setting( 'swcc_linklog', 'swcc_linklog_iplockparam', 'swcc_linklog_admin_iplockparam_validate');
+  add_settings_section( 'link-log-settings-iplock', 'IP Lock', 'swcc_linklog_admin_settings_iplock', 'link-log-settings' );
+  add_settings_field( 'swcc_linklog_settings_iplockparam', 'IP Lock Setting', 'swcc_linklog_admin_iplockparam', 'link-log-settings', 'link-log-settings-iplock', array( 'label_for' => 'swcc_linklog_iplockparam' ) );
 }
 
 // load javascript in header
@@ -198,6 +272,11 @@ function swcc_linklog_add_styles() {
 // get name of url parameter
 function swcc_linklog_get_parametername() {
   return get_option( 'swcc_linklog_urlparam', 'goto' );
+}
+
+// get ip lock parameter value
+function swcc_linklog_get_iplock() {
+  return get_option( 'swcc_linklog_iplockparam', '0' );
 }
 
 // this function can be used in theme
@@ -265,10 +344,25 @@ function swcc_linklog_new_blog( $blog_id, $user_id, $domain, $path, $site_id, $m
 function swcc_linklog_create_table() {
   global $wpdb;
   require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-  dbDelta( esc_sql( 'CREATE TABLE IF NOT EXISTS ' . $wpdb->prefix . 'linklog (linklog_url varchar(500) NOT NULL, linklog_clicked timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ) DEFAULT CHARSET=utf8;' ) );
+  dbDelta( 'CREATE TABLE ' . $wpdb->prefix . 'linklog (
+    linklog_url VARCHAR(500) NOT NULL, 
+    linklog_clicked TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+    linklog_ip VARCHAR(50) 
+    );'
+  );
+  update_option( "swcc_linklog_version", SWCC_LINKLOG_VERSION );
+}
+
+// update
+function swcc_linklog_update() {
+  $installed_version = get_option( "swcc_linklog_version" );
+  if ( $installed_version != SWCC_LINKLOG_VERSION )  {
+    swcc_linklog_create_table();
+  }
 }
 
 register_activation_hook( __FILE__, 'swcc_linklog_install' );
+add_action( 'plugins_loaded', 'swcc_linklog_update' );
 add_action( 'wpmu_new_blog', 'swcc_linklog_new_blog', 10, 6);
 
 // ***
