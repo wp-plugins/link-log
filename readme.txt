@@ -23,7 +23,7 @@ It is now possible to omit multiplce clicks from the same IP-address within a se
 
 = Settings (optional) =
 
-In Settings -> link-log the name of the parameter (default ?goto) and the duration of the IP-lock (default none) can be changed.
+In 'Settings' -> 'link-log' the name of the parameter (default ?goto) and the duration of the IP-lock (default none) can be changed.
 
 = Theme functions =
 
