@@ -3,7 +3,7 @@
 Plugin Name: link-log
 Plugin URI: http://smartware.cc/wp-link-log
 Description: Log external link clicks
-Version: 1.1
+Version: 1.2
 Author: smartware.cc
 Author URI: http://smartware.cc
 License: GPL2
@@ -26,8 +26,9 @@ License: GPL2
 */
 
 // set version
-define( 'SWCC_LINKLOG_VERSION', '1.1' );
+define( 'SWCC_LINKLOG_VERSION', '1.2' );
 
+// just to be sure...
 if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
   require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
 }
@@ -71,7 +72,12 @@ function swcc_linklog_redirect( $wp ) {
       $ip = get_client_ip();
       $url = esc_sql( $url );
       $insert = true;
-      if ( $iplock != 0 && $ip != '' ) {
+      if ( swcc_linklog_get_omitbots() ) {
+        if ( swcc_linklog_is_bot() ) {
+          $insert = false;
+        }
+      }
+      if ( $insert && $iplock != 0 && $ip != '' ) {
         $test = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . 'linklog WHERE linklog_url = "' . $url . '" AND linklog_ip = "' . $ip . '" AND linklog_clicked >=  DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL -' . $iplock . ' SECOND)' );
         if ( ! is_null($wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . 'linklog WHERE linklog_url = "' . $url . '" AND linklog_ip = "' . $ip . '" AND linklog_clicked >=  DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL -' . $iplock . ' SECOND)' ) ) ) {
           $insert = false;
@@ -114,14 +120,6 @@ function swcc_linklog_admin_log() {
   <div class="wrap">
     <div id="icon-tools" class="icon32"></div>
     <h2>link-log Link Click Statistic</h2>
-    <h3 class="title">the link-log plugin</h3>
-    <ul class='subsubsub'>
-      <li><a href="#">Please rate the plugin</a> |</li>
-      <li><a href="#">Plugin homepage |</a></li>
-      <li><a href="#">Author homepage</a></li>
-    </ul>
-    <div class="clear"></div>
-    <h3 class="title">click statistics</h3>					
     <table class="widefat fixed" cellspacing="0" id="linklog-log">
       <thead>
         <tr>
@@ -176,13 +174,28 @@ function swcc_linklog_admin_log() {
 
 // show settings in admin / settings / link-log
 function swcc_linklog_admin_settings() {
-  echo '<div class="wrap">';
-  screen_icon();
-  echo '<h2>link-log Settings</h2><form method="post" action="options.php">';
-  settings_fields( 'swcc_linklog' ); 
-  do_settings_sections( 'link-log-settings' );
-  submit_button(); 
-  echo '</form></div>';
+  ?>
+  <div class="wrap swcclinklogadmin">
+    <?php screen_icon(); ?>
+    <h2>link-log Settings</h2>
+    <form method="post" action="options.php">
+      <div id="poststuff">
+        <div id="post-body" class="metabox-holder columns-<?php echo 1 == get_current_screen()->get_columns() ? '1' : '2'; ?>">
+          <div id="post-body-content">
+            <?php
+            settings_fields( 'swcc_linklog' ); 
+            do_settings_sections( 'link-log-settings' );
+            submit_button(); 
+            ?>
+          </div>
+          <div id="postbox-container-1" class="postbox-container">
+            <?php do_meta_boxes( 'swcc_linklog', 'side', true ); ?>
+          </div>
+        </div>
+      </div>    
+    </form>
+  </div>
+  <?php
 }
 
 // sttings group : url 
@@ -193,6 +206,11 @@ function swcc_linklog_admin_settings_url() {
 // sttings group : iplock 
 function swcc_linklog_admin_settings_iplock() {
   echo '<p>This feature avoids counting of multiple click.</p>';
+}
+
+// settings group : omit bots
+function swcc_linklog_admin_settings_omitbots() {
+  echo '<p>This feature allows you to omit Search Engines from Click Statistics.</p>';
 }
 
 // handle the settings field : url
@@ -221,6 +239,11 @@ function swcc_linklog_admin_iplockparam() {
   echo '</select>';
 }
 
+// handle the settings field : omitbots
+function swcc_linklog_admin_omitbotsparam() {
+  echo '<input class="regular-text" type="checkbox" name="swcc_linklog_omitbotsparam" id="swcc_linklog_omitbotsparam" value="1"' . ( ( swcc_linklog_get_omitbots() ) ? ' checked="checked"' : '' ) . ' />';
+}
+
 // check input : url
 function swcc_linklog_admin_urlparam_validate( $input ) {
   if ( empty( $input ) ) {
@@ -237,6 +260,42 @@ function swcc_linklog_admin_urlparam_validate( $input ) {
 // check input : iploc
 function swcc_linklog_admin_iplockparam_validate( $input ) {
   return $input;
+}
+
+// check input : omit bots
+function swcc_linklog_admin_omitbotsparam_validate( $input ) {
+  return $input;
+}
+
+// add like meta box 
+function swcc_linklog_add_meta_box_like() {
+  ?>
+  <ul>
+    <li><a href="http://wordpress.org/extend/plugins/link-log/">Please rate the plugin</a></li>
+    <li><a href="http://smartware.cc/wp-link-log/">Plugin homepage</a></li>
+    <li><a href="http://smartware.cc/">Author homepage</a></li>
+    <li><a href="https://plus.google.com/+SmartwareCc">Authors Google+ Page</a></li>
+    <li><a href="https://www.facebook.com/smartware.cc">Authors facebook Page</a></li>
+  </ul>
+  <?php
+}
+
+// add help meta box 
+function swcc_linklog_add_meta_box_help() {
+  ?>
+  <ul>
+    <li><a href="http://wordpress.org/plugins/link-log/faq/">Take a look at the FAQ section</a></li>
+    <li><a href="http://wordpress.org/support/plugin/link-log">Take a look at the Support section</a></li>
+    <li><a href="http://smartware.cc/contact/">Feel free to contact the Author</a></li>
+  </ul>
+  <?php
+}
+
+// add jquery for meta boxes
+function swcc_linklog_add_footer_script() {
+  ?>
+  <script>jQuery(document).ready(function(){ postboxes.add_postbox_toggles(pagenow); });</script>
+  <?php
 }
 
 // init backend 
@@ -256,6 +315,13 @@ function swcc_linklog_register_settings() {
   register_setting( 'swcc_linklog', 'swcc_linklog_iplockparam', 'swcc_linklog_admin_iplockparam_validate');
   add_settings_section( 'link-log-settings-iplock', 'IP Lock', 'swcc_linklog_admin_settings_iplock', 'link-log-settings' );
   add_settings_field( 'swcc_linklog_settings_iplockparam', 'IP Lock Setting', 'swcc_linklog_admin_iplockparam', 'link-log-settings', 'link-log-settings-iplock', array( 'label_for' => 'swcc_linklog_iplockparam' ) );
+  
+  register_setting( 'swcc_linklog', 'swcc_linklog_omitbotsparam', 'swcc_linklog_admin_omitbotsparam_validate');
+  add_settings_section( 'link-log-settings-omitbots', 'Omit Search Engines', 'swcc_linklog_admin_settings_omitbots', 'link-log-settings' );
+  add_settings_field( 'swcc_linklog_settings_omitbotsparam', 'Exclude Search Engines and other Robots', 'swcc_linklog_admin_omitbotsparam', 'link-log-settings', 'link-log-settings-omitbots', array( 'label_for' => 'swcc_linklog_omitbotsparam' ) );
+  
+  add_meta_box( 'swcc_linklog_meta_box_like', 'Like this Plugin?', 'swcc_linklog_add_meta_box_like', 'swcc_linklog', 'side' );
+  add_meta_box( 'swcc_linklog_meta_box_help', 'Need help?', 'swcc_linklog_add_meta_box_help', 'swcc_linklog', 'side' );
 }
 
 // load javascript in header
@@ -269,6 +335,19 @@ function swcc_linklog_add_styles() {
   wp_enqueue_style( 'swcc-linklog-css', plugins_url('css/style.css', __FILE__ ) );
 }
 
+// add css
+function swcc_linklog_admin_head() {
+  ?>
+    <style type="text/css">
+      .swcclinklogadmin #post-body-content h3 {
+        font-size: 1.3em !important;
+        margin: 1em 0px !important;
+        padding: 0 !important;
+      }
+    </style>
+  <?php
+}
+
 // get name of url parameter
 function swcc_linklog_get_parametername() {
   return get_option( 'swcc_linklog_urlparam', 'goto' );
@@ -277,6 +356,11 @@ function swcc_linklog_get_parametername() {
 // get ip lock parameter value
 function swcc_linklog_get_iplock() {
   return get_option( 'swcc_linklog_iplockparam', '0' );
+}
+
+// get omit bots parameter value
+function swcc_linklog_get_omitbots() {
+  return ( ( get_option( 'swcc_linklog_omitbotsparam', '0' ) == '1' ) ? true : false );
 }
 
 // this function can be used in theme
@@ -291,13 +375,16 @@ function the_linklog_url( $url ) {
   echo swcc_linklog_make_url( $url );
 }
 
+// *** main ***
 add_filter( 'the_content', 'swcc_linklog_parse_content' );
 add_filter( 'query_vars', 'swcc_linklog_queryvar' );
 add_filter( 'parse_request', 'swcc_linklog_redirect' );
 add_action( 'admin_menu', 'swcc_linklog_adminmenu' );
 add_action( 'admin_init', 'swcc_linklog_register_settings' );
 add_action( 'admin_init', 'swcc_linklog_add_styles' );
+add_action( 'admin_head', 'swcc_linklog_admin_head' );
 add_action( 'admin_enqueue_scripts', 'swcc_linklog_add_scripts' );
+add_action( 'admin_footer', 'swcc_linklog_add_footer_script' );
 
 // ***
 // *** install / activate / new multisite blog
@@ -399,6 +486,50 @@ function swcc_linklog_uninstall_network() {
 function swcc_linklog_delete_table() {
   global $wpdb;
   $wpdb->query('DROP TABLE IF EXISTS ' . $wpdb->prefix . 'linklog' );
+}
+
+// function to detect if visitor is a bot
+function swcc_linklog_is_bot() {
+  $bots = array( 
+    'googlebot', 
+    'msnbot', 
+    'baiduspider', 
+    'bingbot', 
+    'slurp', 
+    'yahoo', 
+    'askjeeves', 
+    'fastcrawler', 
+    'infoseek', 
+    'lycos', 
+    'yandex', 
+    'teoma', 
+    'ia_archiver', 
+    'webmon', 
+    'webcrawler', 
+    'findlink',
+    'exabot',
+    'gigabot',
+    'msrbot',
+    'seekbot',
+    'yacybot',
+    'mj12bot',
+    'yanga',
+    'domaincrawler',
+    'facebookexternalhit',
+    'openindexspider',
+    'backlinkcrawler',
+    'alexa',
+    'froogle',
+    'inktomi',
+    'looksmart',
+    'firefly',
+    'ask jeeves',
+    'webfindbot',
+    'zyborg',
+    'feedfetcher-google',
+    'twitturls'
+  );
+  return ( ( preg_match( '/' . implode( '|', $bots ) . '/', strtolower( $_SERVER['HTTP_USER_AGENT'] ) ) > 0) ? true : false );
 }
 
 register_uninstall_hook( __FILE__, 'swcc_linklog_uninstall' );

@@ -1,9 +1,10 @@
 === link-log ===
 Contributors: smartware.cc
+Donate link:http://smartware.cc/make-a-donation/
 Tags: log, click, click counting, link analytics, tracking, visitor tracking, external links
 Requires at least: 3.0
-Tested up to: 3.9.1
-Stable tag: 1.1
+Tested up to: 4.0
+Stable tag: 1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -11,19 +12,22 @@ Find out where your visitors leave to. Track clicks on external links.
 
 == Description ==
 
-This Plugin allows you to track which external links your visitors click on.
+> This Plugin allows you to track which external links your visitors click on.
 
 To achieve this the link-log Plugin changes all your links to external sites. For example **http://www.google.com** is changed to **http://www.example.com/?goto=http://www.google.com**. The link change takes place when a post or page is displayed. Internal links to pages on your domain are not changed, also URLs not starting with "http" or "https" are not changed. Also attributes (like class or target) are not touched.
 
 There is **no need to change anything**. All Links in all posts (even custom post types) and pages are changed automatically in front end. When editing a post or page in back end all links appear unchanged.
 
-= New in Version 1.1 =
+= New in Version 1.2 =
 
-It is now possible to omit multiplce clicks from the same IP-address within a selectable period (30 seconds to 72 hours).
+It is now possible to omit search engines and other bots.
 
 = Settings (optional) =
 
-In 'Settings' -> 'link-log' the name of the parameter (default ?goto) and the duration of the IP-lock (default none) can be changed.
+In 'Settings' -> 'link-log' you can set
+* the name of the parameter (default ?goto)
+* the duration of the IP-lock (default none)
+* whether to omit search engines or not
 
 = Theme functions =
 
@@ -39,11 +43,23 @@ e.g. `<a href="<?php the_linklog_url( 'http://www.google.com' ); ?>" target"=_bl
 
 Visit the [Plugin Homepage](http://smartware.cc/wp-link-log)
 
+= Do you like the link-log Plugin? =
+
+Thanks, I appreciate that. You don’t need to make a donation. No money, no beer, no coffee. Please, just [tell the world that you like what I’m doing](http://smartware.cc/make-a-donation/)! And that’s all.
+
 == Installation ==
 
-1. Upload the "link-log" folder to your "/wp-content/plugins/" directory.
+= From your WordPress dashboard =
+
+1. Visit 'Plugins' -> 'Add New'
+1. Search for 'link-log'
 1. Activate the plugin through the 'Plugins' menu in WordPress
-1. Optional: change parameter name in Settings -> link-log
+
+= Manually from wordpress.org =
+
+1. Download link-log from wordpress.org and unzip the archive
+1. Upload the `link-log` folder to your `/wp-content/plugins/` directory
+1. Activate the plugin through the 'Plugins' menu in WordPress
 
 == Frequently Asked Questions ==
 
@@ -73,6 +89,9 @@ Yes, in a Multisite installation the plugin stores the link clicks per blog.
 2. Click Stats
 
 == Changelog ==
+
+= 1.2 (2014-09-19) =
+* Omit search engines and other bots
 
 = 1.1 (2014-06-25) =
 * Omit multiple clicks from same IP
