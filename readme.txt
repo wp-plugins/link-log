@@ -24,10 +24,7 @@ It is now possible to omit search engines and other bots.
 
 = Settings (optional) =
 
-In 'Settings' -> 'link-log' you can set
-* the name of the parameter (default ?goto)
-* the duration of the IP-lock (default none)
-* whether to omit search engines or not
+In 'Settings' -> 'link-log' you can set the name of the parameter (default ?goto), the duration of the IP-lock (default none) and whether to omit search engines or not.
 
 = Theme functions =
 
@@ -45,7 +42,7 @@ Visit the [Plugin Homepage](http://smartware.cc/wp-link-log)
 
 = Do you like the link-log Plugin? =
 
-Thanks, I appreciate that. You don’t need to make a donation. No money, no beer, no coffee. Please, just [tell the world that you like what I’m doing](http://smartware.cc/make-a-donation/)! And that’s all.
+Thanks, I appreciate that. You don't need to make a donation. No money, no beer, no coffee. Please, just [tell the world that you like what I'm doing](http://smartware.cc/make-a-donation/)! And that's all.
 
 == Installation ==
 
