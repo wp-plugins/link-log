@@ -4,7 +4,7 @@ Donate link:http://smartware.cc/make-a-donation/
 Tags: log, click, click counting, link analytics, tracking, visitor tracking, external links
 Requires at least: 3.0
 Tested up to: 4.0
-Stable tag: 1.2
+Stable tag: 1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,9 +18,10 @@ To achieve this the link-log Plugin changes all your links to external sites. Fo
 
 There is **no need to change anything**. All Links in all posts (even custom post types) and pages are changed automatically in front end. When editing a post or page in back end all links appear unchanged.
 
-= New in Version 1.2 =
+= New in Version 1.3 =
 
-It is now possible to omit search engines and other bots.
+Works now with WPML, performance improvement, remove trailing slashes  
+**See [Changelog](https://wordpress.org/plugins/link-log/changelog/) for details and update notice**
 
 = Settings (optional) =
 
@@ -86,6 +87,15 @@ Yes, in a Multisite installation the plugin stores the link clicks per blog.
 2. Click Stats
 
 == Changelog ==
+
+= 1.3 (2014-10-26) = 
+* Works now with WPML  
+The [WPML Plugin](http://wpml.org) changes the Home URL by adding the language to it - link-log now can handle that to work with WPML and other Plugins that change the Home URL (thanks to [GREIFF](http://greiff.de/en/) for testing)
+* Performance Improvement  
+The browser is now forced to redirect to the target URL **before** the data is stored to the databse
+* remove trailing slashes  
+To avoid duplicate entries for e.g. example.com and example.com/ all trailing slashes are removed now  
+**Update Notice**: when updating to version 1.3 all trailing slashes from all existing entries in the database are removed automatically
 
 = 1.2 (2014-09-19) =
 * Omit search engines and other bots

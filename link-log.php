@@ -3,7 +3,7 @@
 Plugin Name: link-log
 Plugin URI: http://smartware.cc/wp-link-log
 Description: Log external link clicks
-Version: 1.2
+Version: 1.3
 Author: smartware.cc
 Author URI: http://smartware.cc
 License: GPL2
@@ -26,7 +26,7 @@ License: GPL2
 */
 
 // set version
-define( 'SWCC_LINKLOG_VERSION', '1.2' );
+define( 'SWCC_LINKLOG_VERSION', '1.3' );
 
 // just to be sure...
 if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
@@ -46,7 +46,7 @@ function swcc_linklog_change_link( $linkparts ) {
 // make the url
 function swcc_linklog_make_url ( $url ) {
   $url = str_replace( '&#038;', '&', str_replace( '&amp;', '&', $url ) );
-  if ( ( substr( strtolower( $url ), 0, 7 ) == 'http://' || substr( strtolower( $url ), 0, 8 ) == 'https://' ) &&  substr( strtolower( $url ), 0, strlen( home_url() ) ) != strtolower( home_url() ) ) {
+  if ( ( substr( strtolower( $url ), 0, 7 ) == 'http://' || substr( strtolower( $url ), 0, 8 ) == 'https://' ) &&  substr( strtolower( $url ), 0, strlen( home_url() ) ) != strtolower( home_url() ) && substr( strtolower( $url ), 0, strlen( admin_url() ) ) != strtolower( admin_url() ) && substr( strtolower( $url ), 0, strlen( content_url() ) ) != strtolower( content_url() ) && substr( strtolower( $url ), 0, strlen( plugins_url() ) ) != strtolower( plugins_url() ) ) {
     $url = home_url() . '?' . swcc_linklog_get_parametername() . '=' . urlencode( $url );
   }
   return $url;
@@ -59,23 +59,33 @@ function swcc_linklog_queryvar ($qvars) {
 }
 
 // log and redirect
-function swcc_linklog_redirect( $wp ) {
-  if ( empty( $wp->request ) ) {
-    // we are on the front page
+function swcc_linklog_redirect() {
+  if ( !is_admin() and isset( $_GET ) ) {
     $urlparam = swcc_linklog_get_parametername();
-    if ( array_key_exists ( $urlparam, $wp->query_vars ) ) {
+    if ( isset( $_GET[$urlparam] ) ) {
       // goto key exitst
-      global $wpdb;
-      $url = str_replace ( ' ', '+', urldecode( $wp->query_vars[$urlparam] ) );
-      wp_redirect( $url );
-      $iplock = swcc_linklog_get_iplock();
+      $url = str_replace ( ' ', '+', urldecode( $_GET[$urlparam] ) );
       $ip = get_client_ip();
-      $url = esc_sql( $url );
+      $is_bot = swcc_linklog_is_bot();
+      
+      // redirect immediately
+      ignore_user_abort( true );
+      set_time_limit( 0 );
+      header( 'Location: ' . $url, true );
+      header( 'Connection: close', true );
+      header( "Content-Encoding: none\r\n" );
+      header( 'Content-Length: 0', true );
+      flush();
+      ob_flush();
+      session_write_close();
+      
+      // do DB stuff after client was redirected
+      $iplock = swcc_linklog_get_iplock();
+      $url = rtrim( esc_sql( $url ), '/' );
       $insert = true;
-      if ( swcc_linklog_get_omitbots() ) {
-        if ( swcc_linklog_is_bot() ) {
-          $insert = false;
-        }
+      global $wpdb;
+      if ( swcc_linklog_get_omitbots() && $is_bot ) {
+        $insert = false;
       }
       if ( $insert && $iplock != 0 && $ip != '' ) {
         $test = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . 'linklog WHERE linklog_url = "' . $url . '" AND linklog_ip = "' . $ip . '" AND linklog_clicked >=  DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL -' . $iplock . ' SECOND)' );
@@ -271,11 +281,11 @@ function swcc_linklog_admin_omitbotsparam_validate( $input ) {
 function swcc_linklog_add_meta_box_like() {
   ?>
   <ul>
-    <li><a href="http://wordpress.org/extend/plugins/link-log/">Please rate the plugin</a></li>
-    <li><a href="http://smartware.cc/wp-link-log/">Plugin homepage</a></li>
-    <li><a href="http://smartware.cc/">Author homepage</a></li>
-    <li><a href="https://plus.google.com/+SmartwareCc">Authors Google+ Page</a></li>
-    <li><a href="https://www.facebook.com/smartware.cc">Authors facebook Page</a></li>
+    <li><div class="dashicons dashicons-wordpress"></div>&nbsp;&nbsp;<a href="http://wordpress.org/extend/plugins/link-log/">Please rate the plugin</a></li>
+    <li><div class="dashicons dashicons-wordpress"></div>&nbsp;&nbsp;<a href="http://smartware.cc/wp-link-log/">Plugin homepage</a></li>
+    <li><div class="dashicons dashicons-admin-home"></div>&nbsp;&nbsp;<a href="http://smartware.cc/">Author homepage</a></li>
+    <li><div class="dashicons dashicons-googleplus"></div>&nbsp;&nbsp;<a href="https://plus.google.com/+SmartwareCc">Authors Google+ Page</a></li>
+    <li><div class="dashicons dashicons-facebook-alt"></div>&nbsp;&nbsp;<a href="https://www.facebook.com/smartware.cc">Authors facebook Page</a></li>
   </ul>
   <?php
 }
@@ -284,18 +294,16 @@ function swcc_linklog_add_meta_box_like() {
 function swcc_linklog_add_meta_box_help() {
   ?>
   <ul>
-    <li><a href="http://wordpress.org/plugins/link-log/faq/">Take a look at the FAQ section</a></li>
-    <li><a href="http://wordpress.org/support/plugin/link-log">Take a look at the Support section</a></li>
-    <li><a href="http://smartware.cc/contact/">Feel free to contact the Author</a></li>
+    <li><div class="dashicons dashicons-wordpress"></div>&nbsp;&nbsp;<a href="http://wordpress.org/plugins/link-log/faq/">Take a look at the FAQ section</a></li>
+    <li><div class="dashicons dashicons-wordpress"></div>&nbsp;&nbsp;<a href="http://wordpress.org/support/plugin/link-log">Take a look at the Support section</a></li>
+    <li><div class="dashicons dashicons-admin-comments"></div>&nbsp;&nbsp;<a href="http://smartware.cc/contact/">Feel free to contact the Author</a></li>
   </ul>
   <?php
 }
 
 // add jquery for meta boxes
 function swcc_linklog_add_footer_script() {
-  ?>
-  <script>jQuery(document).ready(function(){ postboxes.add_postbox_toggles(pagenow); });</script>
-  <?php
+  // do nothing
 }
 
 // init backend 
@@ -378,7 +386,7 @@ function the_linklog_url( $url ) {
 // *** main ***
 add_filter( 'the_content', 'swcc_linklog_parse_content' );
 add_filter( 'query_vars', 'swcc_linklog_queryvar' );
-add_filter( 'parse_request', 'swcc_linklog_redirect' );
+add_action( 'init', 'swcc_linklog_redirect', 1 );
 add_action( 'admin_menu', 'swcc_linklog_adminmenu' );
 add_action( 'admin_init', 'swcc_linklog_register_settings' );
 add_action( 'admin_init', 'swcc_linklog_add_styles' );
@@ -445,6 +453,10 @@ function swcc_linklog_update() {
   $installed_version = get_option( "swcc_linklog_version" );
   if ( $installed_version != SWCC_LINKLOG_VERSION )  {
     swcc_linklog_create_table();
+  }
+  if ( $installed_version < '1.3' )  {
+    global $wpdb;
+    $wpdb->query( 'UPDATE ' . $wpdb->prefix . 'linklog SET linklog_url = TRIM(TRAILING "/" FROM linklog_url)' ) ;
   }
 }
 
