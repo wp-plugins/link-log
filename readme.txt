@@ -4,7 +4,7 @@ Donate link:http://smartware.cc/make-a-donation/
 Tags: log, click, click counting, link analytics, tracking, visitor tracking, external links
 Requires at least: 3.0
 Tested up to: 4.2
-Stable tag: 1.3
+Stable tag: 1.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,18 +14,19 @@ Find out where your visitors leave to. Track clicks on external links.
 
 > This Plugin allows you to track which external links your visitors click on.
 
-To achieve this the link-log Plugin changes all your links to external sites. For example **http://www.google.com** is changed to **http://www.example.com/?goto=http://www.google.com**. The link change takes place when a post or page is displayed. Internal links to pages on your domain are not changed, also URLs not starting with "http" or "https" are not changed. Also attributes (like class or target) are not touched.
+**See also [Plugin Homepage](http://smartware.cc/free-wordpress-plugins/link-log/) and [Plugin Doc](http://smartware.cc/docs/link-log/)**
 
-There is **no need to change anything**. All Links in all posts (even custom post types) and pages are changed automatically in front end. When editing a post or page in back end all links appear unchanged.
+The link-log Plugin changes all your links to external sites. For example **http://www.google.com** is changed to **http://www.example.com/?goto=http://www.google.com**. The link change takes place when a post or page is displayed. Internal links to pages on your domain are not changed, also URLs not starting with "http" or "https" are not changed. Also attributes (like class or target) are not touched.
 
-= New in Version 1.3 =
+There is **no need to change anything**. All Links in all posts and pages are changed automatically in front end. When editing a post or page in back end all links appear unchanged.
 
-Works now with WPML, performance improvement, remove trailing slashes  
-**See [Changelog](https://wordpress.org/plugins/link-log/changelog/) for details and update notice**
+= New in Version 1.4 =
+
+**There's a lot of new stuff. When updating from a previous version please see [Changelog](https://wordpress.org/plugins/link-log/changelog/).**
 
 = Settings (optional) =
 
-In 'Settings' -> 'link-log' you can set the name of the parameter (default ?goto), the duration of the IP-lock (default none) and whether to omit search engines or not.
+In 'Settings' -> 'link-log' you can change several settings. **It is highly recommended to change the IP Lock Setting and the Search Engines Setting** as desired. See [Plugin Doc](http://smartware.cc/docs/link-log/) for details.
 
 = Theme functions =
 
@@ -37,13 +38,17 @@ e.g. `<?php $google = get_linklog_url( 'http://www.google.com' ); ?>`
 **`the_linklog_url( $url )`** to echo the tracking URL, 
 e.g. `<a href="<?php the_linklog_url( 'http://www.google.com' ); ?>" target"=_blank">Google</a>`
 
-= More Information =
-
-Visit the [Plugin Homepage](http://smartware.cc/wp-link-log)
-
 = Do you like the link-log Plugin? =
 
 Thanks, I appreciate that. You don't need to make a donation. No money, no beer, no coffee. Please, just [tell the world that you like what I'm doing](http://smartware.cc/make-a-donation/)! And that's all.
+
+= More plugins from smartware.cc =
+
+* **[404page](https://wordpress.org/plugins/404page/)** Define any of your WordPress pages as 404 error page 
+* **[hashtagger](https://wordpress.org/plugins/hashtagger/)** - Tag your posts by using #hashtags
+* **[smart Archive Page Remove](https://wordpress.org/plugins/smart-archive-page-remove/)** - Completely remove unwated Archive Pages from your Blog 
+* **[smart User Slug Hider](https://wordpress.org/plugins/smart-user-slug-hider/)** - Hide usernames in author pages URLs to enhance security 
+* **[JavaScript AutoLoader](https://wordpress.org/plugins/javascript-autoloader/)** - Load JavaScript files without changing files in the theme directory or installing several plugins to add all the desired functionality
 
 == Installation ==
 
@@ -75,7 +80,7 @@ Yes, but if you change the parameter name you have to clear the cache.
 
 = Will the plugin work with my existing Theme?  =
 
-Yes, the plugin works with all Themes.
+The plugin should work with all Themes.
 
 = Will the plugin work on WordPress Multisite?  =
 
@@ -83,10 +88,20 @@ Yes, in a Multisite installation the plugin stores the link clicks per blog.
 
 == Screenshots ==
 
-1. Settings
-2. Click Stats
+1. Link Click Analysis
+2. General Settings
+3. Advanced Settings
+4. Automation Settings
 
 == Changelog ==
+
+= 1.4 (2015-04-28) =
+* Option to add rel="nofollow" to links
+* Option to track only specific posts/pages
+* Complete documentation accessible from back end
+* Click Analysis now accessible also for Editors, not only for Admins
+* Click Analysis now uses standard WP table
+* Filtering of results
 
 = 1.3 (2014-10-26) = 
 * Works now with WPML  
